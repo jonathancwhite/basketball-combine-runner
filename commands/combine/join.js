@@ -3,6 +3,7 @@ const {
 	getCurrentCombine,
 	createEmptyCombine,
 	addPlayerToCombine,
+	startCombine,
 } = require("../../controllers/combineController");
 const Player = require("../../models/PlayerModel");
 
@@ -95,6 +96,34 @@ module.exports = {
 			position,
 			userId,
 		);
+
+		if (response.team_1.length + response.team_2.length === 10) {
+			let replyMessage = `
+			@everyone - COMBINE LIST - /join to get on the list.\n
+			**Team 1:**
+			PG: ${formatPlayer(response.team_1?.find((p) => p.position === "PG"))}
+			SG: ${formatPlayer(response.team_1?.find((p) => p.position === "SG"))}
+			SF: ${formatPlayer(response.team_1?.find((p) => p.position === "SF"))}
+			PF: ${formatPlayer(response.team_1?.find((p) => p.position === "PF"))}
+			C: ${formatPlayer(response.team_1?.find((p) => p.position === "C"))}
+			\n
+			**Team 2:**
+			PG: ${formatPlayer(response.team_2?.find((p) => p.position === "PG"))}
+			SG: ${formatPlayer(response.team_2?.find((p) => p.position === "SG"))}
+			SF: ${formatPlayer(response.team_2?.find((p) => p.position === "SF"))}
+			PF: ${formatPlayer(response.team_2?.find((p) => p.position === "PF"))}
+			C: ${formatPlayer(response.team_2?.find((p) => p.position === "C"))}
+			\n
+			Code: ${response.code}
+
+			When you finish the game, please take a screenshot and run the /report command with the code and the screenshot attached.
+			`;
+
+			await startCombine();
+
+			await interaction.reply(replyMessage);
+			return;
+		}
 
 		let replyMessage = `
 		@everyone - COMBINE LIST - /join to get on the list.\n
