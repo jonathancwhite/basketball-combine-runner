@@ -1,0 +1,113 @@
+const { SlashCommandBuilder } = require("discord.js");
+const Player = require("../../models/PlayerModel");
+
+module.exports = {
+	data: new SlashCommandBuilder()
+		.setName("register")
+		.setDescription("Join league as a player")
+		.addStringOption((option) =>
+			option
+				.setName("gamertag")
+				.setDescription("Your gamertag in 2K")
+				.setRequired(true),
+		)
+		.addStringOption((option) =>
+			option
+				.setName("position")
+				.setDescription("Your position in the game")
+				.setRequired(true)
+				.addChoices(
+					{ name: "Point Guard", value: "PG" },
+					{ name: "Shooting Guard", value: "SG" },
+					{ name: "Small Forward", value: "SF" },
+					{ name: "Power Forward", value: "PF" },
+					{ name: "Center", value: "C" },
+				),
+		)
+		.addStringOption((option) =>
+			option
+				.setName("console")
+				.setDescription("Your console")
+				.setRequired(true)
+				.addChoices(
+					{ name: "XBOX", value: "XBOX" },
+					{ name: "PS5", value: "PS5" },
+				),
+		)
+		.addStringOption((option) =>
+			option
+				.setName("communication")
+				.setDescription("Your preferred communication method")
+				.setRequired(true)
+				.addChoices(
+					{ name: "Discord", value: "Discord" },
+					{ name: "Party Chat", value: "Party Chat" },
+					{ name: "Game Chat", value: "Game Chat" },
+					{ name: "No Mic", value: "No Mic" },
+				),
+		)
+		.addStringOption((option) =>
+			option
+				.setName("secondary")
+				.setDescription("Your secondary position in the game")
+				.setRequired(false)
+				.addChoices(
+					{ name: "Point Guard", value: "PG" },
+					{ name: "Shooting Guard", value: "SG" },
+					{ name: "Small Forward", value: "SF" },
+					{ name: "Power Forward", value: "PF" },
+					{ name: "Center", value: "C" },
+				),
+		),
+	async execute(interaction) {
+		// Logic for the join command
+		const console = interaction.options.getString("console");
+		const position = interaction.options.getString("position");
+		const communication = interaction.options.getString("communication");
+		const secondary = interaction.options.getString("secondary");
+		const gamertag = interaction.options.getString("gamertag");
+
+		const newPlayer = new Player({
+			discord_user: interaction.user.id,
+			console: console,
+			gamertag: gamertag,
+			main_position: position,
+			preferred_communication: communication,
+			secondary_position: secondary,
+			// rest of the fields are not required during signup
+		});
+
+		let savedPlayer = await newPlayer.save();
+
+		if (!savedPlayer) {
+			await interaction.reply(
+				`<@${interaction.user.id}> There was an error while registering you as a player. Please try again later or contact an admin.`,
+			);
+			return;
+		}
+
+		const roleId = "1202354826424352768"; // Replace with the actual role ID
+		const role = interaction.guild.roles.cache.find((r) => r.id === roleId);
+
+		if (!role) {
+			console.log(`Role not found: ${roleId}`);
+			// Optionally inform the user that the role assignment failed
+			return;
+		}
+
+		try {
+			const member = await interaction.guild.members.fetch(
+				interaction.user.id,
+			);
+			await member.roles.add(role);
+			await interaction.reply(
+				`<@${interaction.user.id}> You have registered as a ${position} under the gamertag: ${gamertag}.`,
+			);
+		} catch (error) {
+			console.error(`Could not add role: ${error}`);
+			await interaction.reply(
+				`Registration succeeded, but there was an issue. Please contact an admin to get your server role.`,
+			);
+		}
+	},
+};
