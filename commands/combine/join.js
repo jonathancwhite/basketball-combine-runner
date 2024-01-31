@@ -70,6 +70,8 @@ module.exports = {
 				SF: ${formatPlayer(response.team_2?.find((p) => p.position === "SF"))}
 				PF: ${formatPlayer(response.team_2?.find((p) => p.position === "PF"))}
 				C: ${formatPlayer(response.team_2?.find((p) => p.position === "C"))}
+
+				ID: ${response._id}
 				`;
 
 				await interaction.reply(replyMessage);
@@ -117,6 +119,8 @@ module.exports = {
 			Code: ${response.code}
 
 			When you finish the game, please take a screenshot and run the /report command with the code and the screenshot attached.
+
+			ID: ${response._id}
 			`;
 
 			await startCombine();
@@ -140,6 +144,8 @@ module.exports = {
 		SF: ${formatPlayer(response.team_2?.find((p) => p.position === "SF"))}
 		PF: ${formatPlayer(response.team_2?.find((p) => p.position === "PF"))}
 		C: ${formatPlayer(response.team_2?.find((p) => p.position === "C"))}
+
+		ID: ${response._id}
 		`;
 
 		await interaction.reply(replyMessage);
