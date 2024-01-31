@@ -56,19 +56,19 @@ module.exports = {
 
 				let replyMessage = `
 				@everyone - COMBINE LIST - /join to get on the list.\n
-				| **Team 1:**
-				| PG: ${formatPlayer(response.team_1?.find((p) => p.position === "PG"))}
-				| SG: ${formatPlayer(response.team_1?.find((p) => p.position === "SG"))}
-				| SF: ${formatPlayer(response.team_1?.find((p) => p.position === "SF"))}
-				| PF: ${formatPlayer(response.team_1?.find((p) => p.position === "PF"))}
-				| C: ${formatPlayer(response.team_1?.find((p) => p.position === "C"))}
+				**Team 1:**
+				PG: ${formatPlayer(response.team_1?.find((p) => p.position === "PG"))}
+				SG: ${formatPlayer(response.team_1?.find((p) => p.position === "SG"))}
+				SF: ${formatPlayer(response.team_1?.find((p) => p.position === "SF"))}
+				PF: ${formatPlayer(response.team_1?.find((p) => p.position === "PF"))}
+				C: ${formatPlayer(response.team_1?.find((p) => p.position === "C"))}
 				\n
-				| **Team 2:**
-				| PG: ${formatPlayer(response.team_2?.find((p) => p.position === "PG"))}
-				| SG: ${formatPlayer(response.team_2?.find((p) => p.position === "SG"))}
-				| SF: ${formatPlayer(response.team_2?.find((p) => p.position === "SF"))}
-				| PF: ${formatPlayer(response.team_2?.find((p) => p.position === "PF"))}
-				| C: ${formatPlayer(response.team_2?.find((p) => p.position === "C"))}
+				**Team 2:**
+				PG: ${formatPlayer(response.team_2?.find((p) => p.position === "PG"))}
+				SG: ${formatPlayer(response.team_2?.find((p) => p.position === "SG"))}
+				SF: ${formatPlayer(response.team_2?.find((p) => p.position === "SF"))}
+				PF: ${formatPlayer(response.team_2?.find((p) => p.position === "PF"))}
+				C: ${formatPlayer(response.team_2?.find((p) => p.position === "C"))}
 				`;
 
 				await interaction.reply(replyMessage);
@@ -98,19 +98,19 @@ module.exports = {
 
 		let replyMessage = `
 		@everyone - COMBINE LIST - /join to get on the list.\n
-		| **Team 1:**
-		| PG: ${formatPlayer(response.team_1?.find((p) => p.position === "PG"))}
-		| SG: ${formatPlayer(response.team_1?.find((p) => p.position === "SG"))}
-		| SF: ${formatPlayer(response.team_1?.find((p) => p.position === "SF"))}
-		| PF: ${formatPlayer(response.team_1?.find((p) => p.position === "PF"))}
-		| C: ${formatPlayer(response.team_1?.find((p) => p.position === "C"))}
+		**Team 1:**
+		PG: ${formatPlayer(response.team_1?.find((p) => p.position === "PG"))}
+		SG: ${formatPlayer(response.team_1?.find((p) => p.position === "SG"))}
+		SF: ${formatPlayer(response.team_1?.find((p) => p.position === "SF"))}
+		PF: ${formatPlayer(response.team_1?.find((p) => p.position === "PF"))}
+		C: ${formatPlayer(response.team_1?.find((p) => p.position === "C"))}
 		\n
-		| **Team 2:**
-		| PG: ${formatPlayer(response.team_2?.find((p) => p.position === "PG"))}
-		| SG: ${formatPlayer(response.team_2?.find((p) => p.position === "SG"))}
-		| SF: ${formatPlayer(response.team_2?.find((p) => p.position === "SF"))}
-		| PF: ${formatPlayer(response.team_2?.find((p) => p.position === "PF"))}
-		| C: ${formatPlayer(response.team_2?.find((p) => p.position === "C"))}
+		**Team 2:**
+		PG: ${formatPlayer(response.team_2?.find((p) => p.position === "PG"))}
+		SG: ${formatPlayer(response.team_2?.find((p) => p.position === "SG"))}
+		SF: ${formatPlayer(response.team_2?.find((p) => p.position === "SF"))}
+		PF: ${formatPlayer(response.team_2?.find((p) => p.position === "PF"))}
+		C: ${formatPlayer(response.team_2?.find((p) => p.position === "C"))}
 		`;
 
 		await interaction.reply(replyMessage);
