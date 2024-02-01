@@ -122,27 +122,6 @@ module.exports = {
 			);
 		}
 
-		try {
-			const member = await interaction.guild.members.fetch(
-				interaction.user.id,
-			);
-
-			await member.setNickname(`${gamertag}`);
-		} catch (error) {
-			// send error in moderator channel
-			const channel = interaction.guild.channels.cache.find(
-				(channel) => channel.name === "moderator-only",
-			);
-
-			await channel.send(
-				`Error setting nickname for ${interaction.user.username} (${interaction.user.id})`,
-			);
-
-			await interaction.reply(
-				`Registration succeeded, but there was an issue. Please contact an admin to get your server role.`,
-			);
-		}
-
 		await interaction.reply(
 			`<@${interaction.user.id}> You have registered as a ${position} under the gamertag: ${gamertag}.`,
 		);
