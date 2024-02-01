@@ -128,9 +128,13 @@ module.exports = {
 			);
 
 			// change user nickname to "Gamertag (Position/Secondary)"
-			await member.setNickname(
-				`${gamertag} (${position}${secondary ? "/" + secondary : ""})`,
-			);
+			if (secondary) {
+				await member.setNickname(
+					`${gamertag} (${position}/${secondary})`,
+				);
+			} else {
+				await member.setNickname(`${gamertag} (${position})`);
+			}
 		} catch (error) {
 			// send error in moderator channel
 			const channel = interaction.guild.channels.cache.find(
