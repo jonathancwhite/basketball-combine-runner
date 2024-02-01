@@ -69,6 +69,42 @@ const isActiveCombineList = async () => {
 	return combine ? true : false;
 };
 
+const isCombineFull = async (combineId) => {
+	const combine = await Combine.findById(combineId);
+	return combine.team_1.length >= 5 && combine.team_2.length >= 5;
+};
+
+const isPlayerInCombine = async (combine, userId) => {
+	return (
+		combine.team_1.filter((p) => p.player === userId).length > 0 ||
+		combine.team_2.filter((p) => p.player === userId).length > 0
+	);
+};
+
+const isPlayerInAnyCombine = async (userId) => {
+	const combine = await Combine.findOne({
+		$or: [{ "team_1.player": userId }, { "team_2.player": userId }],
+	});
+	return combine ? true : false;
+};
+
+const findCombineById = async (combineId) => {
+	return await Combine.findById(combineId);
+};
+
+const anyActiveCombinesAvailableForPlayer = async (position) => {
+	const combine = await Combine.findOne({ started: false, completed: false });
+	if (combine) {
+		if (
+			combine.team_1.filter((p) => p.position === position).length < 2 ||
+			combine.team_2.filter((p) => p.position === position).length < 2
+		) {
+			return combine;
+		}
+	}
+	return null;
+};
+
 const getRandomCode = () => {
 	const characters =
 		"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
@@ -89,4 +125,9 @@ module.exports = {
 	getCurrentCombine,
 	isCombineStarted,
 	isActiveCombineList,
+	isCombineFull,
+	isPlayerInCombine,
+	findCombineById,
+	isPlayerInAnyCombine,
+	anyActiveCombinesAvailableForPlayer,
 };

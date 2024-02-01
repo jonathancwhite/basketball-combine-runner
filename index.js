@@ -7,6 +7,11 @@ const dontenv = require("dotenv");
 dontenv.config();
 const colors = require("colors");
 const connectDB = require("./db");
+const {
+	addPlayerToCombine,
+	isCombineFull,
+	startCombine,
+} = require("./controllers/combineController");
 
 connectDB();
 // Create a new client instance
@@ -80,9 +85,100 @@ client.on(Events.InteractionCreate, async (interaction) => {
 			});
 		}
 		// Add more else if blocks for other select menus as needed
+	} else if (interaction.isButton()) {
+		// Handle button interactions here
+
+		const [actionType, position, itemId] = interaction.customId.split(":");
+
+		if (actionType === "join") {
+			// get player id
+			const playerId = interaction.user.id;
+			let combine = await addPlayerToCombine(itemId, position, playerId);
+
+			if (!combine) {
+				await interaction.update({
+					content: `Could not join the combine. Please try again later.`,
+					components: [],
+				});
+			}
+
+			let thread = await interaction.channel.threads.fetch();
+			thread = thread.find(
+				(thread) => thread.name === `COMBINE - ${combine._id}`,
+			);
+
+			let isFull = await isCombineFull(combine._id);
+
+			if (isFull) {
+				let replyMessage = `
+					@everyone - COMBINE IS STARTING!\n
+					**Team 1:**
+					PG: ${formatPlayer(combine.team_1?.find((p) => p.position === "PG"))}
+					SG: ${formatPlayer(combine.team_1?.find((p) => p.position === "SG"))}
+					SF: ${formatPlayer(combine.team_1?.find((p) => p.position === "SF"))}
+					PF: ${formatPlayer(combine.team_1?.find((p) => p.position === "PF"))}
+					C: ${formatPlayer(combine.team_1?.find((p) => p.position === "C"))}
+					\n
+					**Team 2:**
+					PG: ${formatPlayer(combine.team_2?.find((p) => p.position === "PG"))}
+					SG: ${formatPlayer(combine.team_2?.find((p) => p.position === "SG"))}
+					SF: ${formatPlayer(combine.team_2?.find((p) => p.position === "SF"))}
+					PF: ${formatPlayer(combine.team_2?.find((p) => p.position === "PF"))}
+					C: ${formatPlayer(combine.team_2?.find((p) => p.position === "C"))}
+
+					Code: ${combine.code}
+
+					ID: ${combine._id}
+					`;
+				await thread.reply(replyMessage);
+
+				await startCombine(combine._id);
+				return;
+			} else {
+				let replyMessage = `
+					@everyone - COMBINE LIST - /join to get on the list.\n
+					**Team 1:**
+					PG: ${formatPlayer(combine.team_1?.find((p) => p.position === "PG"))}
+					SG: ${formatPlayer(combine.team_1?.find((p) => p.position === "SG"))}
+					SF: ${formatPlayer(combine.team_1?.find((p) => p.position === "SF"))}
+					PF: ${formatPlayer(combine.team_1?.find((p) => p.position === "PF"))}
+					C: ${formatPlayer(combine.team_1?.find((p) => p.position === "C"))}
+					\n
+					**Team 2:**
+					PG: ${formatPlayer(combine.team_2?.find((p) => p.position === "PG"))}
+					SG: ${formatPlayer(combine.team_2?.find((p) => p.position === "SG"))}
+					SF: ${formatPlayer(combine.team_2?.find((p) => p.position === "SF"))}
+					PF: ${formatPlayer(combine.team_2?.find((p) => p.position === "PF"))}
+					C: ${formatPlayer(combine.team_2?.find((p) => p.position === "C"))}
+					`;
+				await thread.reply(replyMessage);
+			}
+
+			await interaction.update({
+				content: `You've been added to <#Combine - ${itemId}>`,
+				components: [],
+			});
+		}
+
+		if (actionType === "joinNo") {
+			// Perform actions based on the button ID
+
+			console.log(interaction);
+
+			await interaction.update({
+				content:
+					"Could not create new combine. Please try again later.",
+				components: [],
+			});
+		}
+		// Add more else if blocks for other buttons as needed
 	}
 	// You can add more else if blocks for other types of interactions (e.g., buttons) as needed
 });
+
+function formatPlayer(player) {
+	return player ? `<@${player.player}>` : "Empty";
+}
 
 // Log in to Discord with your client's token
 client.login(token);

@@ -1,15 +1,20 @@
-const { SlashCommandBuilder } = require("discord.js");
 const {
-	getCurrentCombine,
+	SlashCommandBuilder,
+	ActionRowBuilder,
+	ButtonBuilder,
+	ButtonStyle,
+} = require("discord.js");
+const Player = require("../../models/PlayerModel");
+const {
 	createEmptyCombine,
 	addPlayerToCombine,
+	isCombineFull,
+	isPlayerInCombine,
+	findCombineById,
+	isPlayerInAnyCombine,
 	startCombine,
+	anyActiveCombinesAvailableForPlayer,
 } = require("../../controllers/combineController");
-const Player = require("../../models/PlayerModel");
-
-/**
- * TODO: Only allow command to be run in the combines channel
- */
 
 module.exports = {
 	data: new SlashCommandBuilder()
@@ -28,128 +33,221 @@ module.exports = {
 					{ name: "Center", value: "C" },
 				),
 		),
-
 	async execute(interaction) {
 		const position = interaction.options.getString("position");
 		const userId = interaction.user.id;
 
-		const player = await Player.findOne({ discord_user: userId });
-
-		if (!player) {
-			// console.log("No player found");
+		// Check if user is registered
+		if (!(await Player.findOne({ discord_user: userId }))) {
 			let channel_id = "1202154641572511744";
-			await interaction.reply(
-				`You need to register for the league first. Please go to <#${channel_id}> and run the /register command.`,
-			);
+			await interaction.reply({
+				content: `You need to register for the league first. Please go to <#${channel_id}> and run the /register command.`,
+				ephemeral: true,
+			});
 			return;
 		}
 
 		let currentCombine;
 
-		currentCombine = await getCurrentCombine();
+		// Check if command is running in thread
+		if (
+			interaction.channel.isThread() &&
+			interaction.channel.name.startsWith("COMBINE - ")
+		) {
+			const combineId = interaction.channel.name.split("COMBINE - ")[1];
+			currentCombine = await findCombineById(combineId);
+		}
 
+		// check if combine is full OR user is in this combine OR is in any combine
+		if (
+			currentCombine &&
+			((await isCombineFull(currentCombine._id)) ||
+				isPlayerInCombine(currentCombine, userId) ||
+				isPlayerInAnyCombine(userId))
+		) {
+			await interaction.reply({
+				content:
+					"The combine is full, or you are already in a combine.",
+				ephemeral: true,
+			});
+			return;
+		}
+
+		// if not in a thread, create a new combine and create a new thread
 		if (!currentCombine) {
-			let newCombine = await createEmptyCombine();
-			if (newCombine) {
-				let response = await addPlayerToCombine(
-					newCombine._id,
-					position,
-					userId,
+			// check if any combine is active
+			currentCombine = await anyActiveCombinesAvailableForPlayer(
+				position,
+			);
+
+			if (currentCombine !== null) {
+				// ask user if they want to join the currentCombine
+				let combine_id = currentCombine._id;
+				let action = "join";
+				let customId = `${action}:${position}:${combine_id}`;
+
+				const row = new ActionRowBuilder().addComponents(
+					new ButtonBuilder()
+						.setCustomId(customId)
+						.setLabel("Yes")
+						.setStyle(ButtonStyle.Success),
+					new ButtonBuilder()
+						.setCustomId("joinNo")
+						.setLabel("No")
+						.setStyle(ButtonStyle.Danger),
 				);
 
-				// console.log(response);
+				await interaction.reply({
+					content: "Do you want to join the ongoing combine?",
+					components: [row],
+					ephemeral: true,
+				});
 
-				let replyMessage = `
-				@everyone - COMBINE LIST - /join to get on the list.\n
-				**Team 1:**
-				PG: ${formatPlayer(response.team_1?.find((p) => p.position === "PG"))}
-				SG: ${formatPlayer(response.team_1?.find((p) => p.position === "SG"))}
-				SF: ${formatPlayer(response.team_1?.find((p) => p.position === "SF"))}
-				PF: ${formatPlayer(response.team_1?.find((p) => p.position === "PF"))}
-				C: ${formatPlayer(response.team_1?.find((p) => p.position === "C"))}
-				\n
-				**Team 2:**
-				PG: ${formatPlayer(response.team_2?.find((p) => p.position === "PG"))}
-				SG: ${formatPlayer(response.team_2?.find((p) => p.position === "SG"))}
-				SF: ${formatPlayer(response.team_2?.find((p) => p.position === "SF"))}
-				PF: ${formatPlayer(response.team_2?.find((p) => p.position === "PF"))}
-				C: ${formatPlayer(response.team_2?.find((p) => p.position === "C"))}
+				await addPlayerToCombine(currentCombine._id, position, userId);
 
-				ID: ${response._id}
-				`;
+				// need to send message in thread named COMBINE - currentCombine._id
+				let thread = await interaction.channel.threads.fetch();
+				thread = thread.find(
+					(thread) =>
+						thread.name === `COMBINE - ${currentCombine._id}`,
+				);
 
-				await interaction.reply(replyMessage);
-				return;
+				let isFull = await isCombineFull(currentCombine._id);
+
+				if (isFull) {
+					let replyMessage = `
+					@everyone - COMBINE IS STARTING!\n
+					**Team 1:**
+					PG: ${formatPlayer(currentCombine.team_1?.find((p) => p.position === "PG"))}
+					SG: ${formatPlayer(currentCombine.team_1?.find((p) => p.position === "SG"))}
+					SF: ${formatPlayer(currentCombine.team_1?.find((p) => p.position === "SF"))}
+					PF: ${formatPlayer(currentCombine.team_1?.find((p) => p.position === "PF"))}
+					C: ${formatPlayer(currentCombine.team_1?.find((p) => p.position === "C"))}
+					\n
+					**Team 2:**
+					PG: ${formatPlayer(currentCombine.team_2?.find((p) => p.position === "PG"))}
+					SG: ${formatPlayer(currentCombine.team_2?.find((p) => p.position === "SG"))}
+					SF: ${formatPlayer(currentCombine.team_2?.find((p) => p.position === "SF"))}
+					PF: ${formatPlayer(currentCombine.team_2?.find((p) => p.position === "PF"))}
+					C: ${formatPlayer(currentCombine.team_2?.find((p) => p.position === "C"))}
+
+					Code: ${currentCombine.code}
+
+					ID: ${currentCombine._id}
+					`;
+					await thread.reply(replyMessage);
+
+					await startCombine(currentCombine._id);
+					return;
+				} else {
+					let replyMessage = `
+					@everyone - COMBINE LIST - /join to get on the list.\n
+					**Team 1:**
+					PG: ${formatPlayer(currentCombine.team_1?.find((p) => p.position === "PG"))}
+					SG: ${formatPlayer(currentCombine.team_1?.find((p) => p.position === "SG"))}
+					SF: ${formatPlayer(currentCombine.team_1?.find((p) => p.position === "SF"))}
+					PF: ${formatPlayer(currentCombine.team_1?.find((p) => p.position === "PF"))}
+					C: ${formatPlayer(currentCombine.team_1?.find((p) => p.position === "C"))}
+					\n
+					**Team 2:**
+					PG: ${formatPlayer(currentCombine.team_2?.find((p) => p.position === "PG"))}
+					SG: ${formatPlayer(currentCombine.team_2?.find((p) => p.position === "SG"))}
+					SF: ${formatPlayer(currentCombine.team_2?.find((p) => p.position === "SF"))}
+					PF: ${formatPlayer(currentCombine.team_2?.find((p) => p.position === "PF"))}
+					C: ${formatPlayer(currentCombine.team_2?.find((p) => p.position === "C"))}
+
+					ID: ${currentCombine._id}
+					`;
+
+					await thread.reply(replyMessage);
+					return;
+				}
 			}
-		}
 
-		if (
-			currentCombine.team_1.length >= 5 &&
-			currentCombine.team_2.length >= 5
-		) {
-			await interaction.reply("Combine is full");
-			return;
-		} else if (
-			currentCombine.team_1?.find((p) => p.player === userId) ||
-			currentCombine.team_2?.find((p) => p.player === userId)
-		) {
-			await interaction.reply("You are already in the combine");
-			return;
-		}
+			currentCombine = await createEmptyCombine();
 
-		let response = await addPlayerToCombine(
-			currentCombine._id,
-			position,
-			userId,
-		);
+			// Add player to the combine
+			await addPlayerToCombine(currentCombine._id, position, userId);
+			// Create a thread for the new combine
+			const thread = await interaction.channel.threads.create({
+				name: `COMBINE - ${currentCombine._id}`,
+				autoArchiveDuration: 60,
+				reason: "New combine created",
+			});
+			// Add the initial message to the thread
 
-		if (response.team_1.length + response.team_2.length === 10) {
 			let replyMessage = `
 			@everyone - COMBINE LIST - /join to get on the list.\n
 			**Team 1:**
-			PG: ${formatPlayer(response.team_1?.find((p) => p.position === "PG"))}
-			SG: ${formatPlayer(response.team_1?.find((p) => p.position === "SG"))}
-			SF: ${formatPlayer(response.team_1?.find((p) => p.position === "SF"))}
-			PF: ${formatPlayer(response.team_1?.find((p) => p.position === "PF"))}
-			C: ${formatPlayer(response.team_1?.find((p) => p.position === "C"))}
+			PG: ${formatPlayer(currentCombine.team_1?.find((p) => p.position === "PG"))}
+			SG: ${formatPlayer(currentCombine.team_1?.find((p) => p.position === "SG"))}
+			SF: ${formatPlayer(currentCombine.team_1?.find((p) => p.position === "SF"))}
+			PF: ${formatPlayer(currentCombine.team_1?.find((p) => p.position === "PF"))}
+			C: ${formatPlayer(currentCombine.team_1?.find((p) => p.position === "C"))}
 			\n
 			**Team 2:**
-			PG: ${formatPlayer(response.team_2?.find((p) => p.position === "PG"))}
-			SG: ${formatPlayer(response.team_2?.find((p) => p.position === "SG"))}
-			SF: ${formatPlayer(response.team_2?.find((p) => p.position === "SF"))}
-			PF: ${formatPlayer(response.team_2?.find((p) => p.position === "PF"))}
-			C: ${formatPlayer(response.team_2?.find((p) => p.position === "C"))}
-			\n
-			Code: ${response.code}
+			PG: ${formatPlayer(currentCombine.team_2?.find((p) => p.position === "PG"))}
+			SG: ${formatPlayer(currentCombine.team_2?.find((p) => p.position === "SG"))}
+			SF: ${formatPlayer(currentCombine.team_2?.find((p) => p.position === "SF"))}
+			PF: ${formatPlayer(currentCombine.team_2?.find((p) => p.position === "PF"))}
+			C: ${formatPlayer(currentCombine.team_2?.find((p) => p.position === "C"))}
 
-			When you finish the game, please take a screenshot and run the /report command with the code and the screenshot attached.
-
-			ID: ${response._id}
+			ID: ${currentCombine._id}
 			`;
 
-			await startCombine();
-
-			await interaction.reply(replyMessage);
+			await thread.reply(replyMessage);
 			return;
 		}
 
+		await addPlayerToCombine(currentCombine._id, position, userId);
+
+		let isFull = await isCombineFull(currentCombine._id);
+
+		if (isFull) {
+			let replyMessage = `
+			@everyone - COMBINE IS STARTING!\n
+			**Team 1:**
+			PG: ${formatPlayer(currentCombine.team_1?.find((p) => p.position === "PG"))}
+			SG: ${formatPlayer(currentCombine.team_1?.find((p) => p.position === "SG"))}
+			SF: ${formatPlayer(currentCombine.team_1?.find((p) => p.position === "SF"))}
+			PF: ${formatPlayer(currentCombine.team_1?.find((p) => p.position === "PF"))}
+			C: ${formatPlayer(currentCombine.team_1?.find((p) => p.position === "C"))}
+			\n
+			**Team 2:**
+			PG: ${formatPlayer(currentCombine.team_2?.find((p) => p.position === "PG"))}
+			SG: ${formatPlayer(currentCombine.team_2?.find((p) => p.position === "SG"))}
+			SF: ${formatPlayer(currentCombine.team_2?.find((p) => p.position === "SF"))}
+			PF: ${formatPlayer(currentCombine.team_2?.find((p) => p.position === "PF"))}
+			C: ${formatPlayer(currentCombine.team_2?.find((p) => p.position === "C"))}
+
+			Code: ${currentCombine.code}
+
+			ID: ${currentCombine._id}
+			`;
+			await interaction.reply(replyMessage);
+
+			await startCombine(currentCombine._id);
+			return;
+		}
+
+		// Update the thread message
 		let replyMessage = `
 		@everyone - COMBINE LIST - /join to get on the list.\n
 		**Team 1:**
-		PG: ${formatPlayer(response.team_1?.find((p) => p.position === "PG"))}
-		SG: ${formatPlayer(response.team_1?.find((p) => p.position === "SG"))}
-		SF: ${formatPlayer(response.team_1?.find((p) => p.position === "SF"))}
-		PF: ${formatPlayer(response.team_1?.find((p) => p.position === "PF"))}
-		C: ${formatPlayer(response.team_1?.find((p) => p.position === "C"))}
+		PG: ${formatPlayer(currentCombine.team_1?.find((p) => p.position === "PG"))}
+		SG: ${formatPlayer(currentCombine.team_1?.find((p) => p.position === "SG"))}
+		SF: ${formatPlayer(currentCombine.team_1?.find((p) => p.position === "SF"))}
+		PF: ${formatPlayer(currentCombine.team_1?.find((p) => p.position === "PF"))}
+		C: ${formatPlayer(currentCombine.team_1?.find((p) => p.position === "C"))}
 		\n
 		**Team 2:**
-		PG: ${formatPlayer(response.team_2?.find((p) => p.position === "PG"))}
-		SG: ${formatPlayer(response.team_2?.find((p) => p.position === "SG"))}
-		SF: ${formatPlayer(response.team_2?.find((p) => p.position === "SF"))}
-		PF: ${formatPlayer(response.team_2?.find((p) => p.position === "PF"))}
-		C: ${formatPlayer(response.team_2?.find((p) => p.position === "C"))}
+		PG: ${formatPlayer(currentCombine.team_2?.find((p) => p.position === "PG"))}
+		SG: ${formatPlayer(currentCombine.team_2?.find((p) => p.position === "SG"))}
+		SF: ${formatPlayer(currentCombine.team_2?.find((p) => p.position === "SF"))}
+		PF: ${formatPlayer(currentCombine.team_2?.find((p) => p.position === "PF"))}
+		C: ${formatPlayer(currentCombine.team_2?.find((p) => p.position === "C"))}
 
-		ID: ${response._id}
+		ID: ${currentCombine._id}
 		`;
 
 		await interaction.reply(replyMessage);
