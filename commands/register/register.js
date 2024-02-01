@@ -1,5 +1,6 @@
 const { SlashCommandBuilder } = require("discord.js");
 const Player = require("../../models/PlayerModel");
+const { createPlayer } = require("../../controllers/playerController");
 
 module.exports = {
 	data: new SlashCommandBuilder()
@@ -67,26 +68,30 @@ module.exports = {
 		const secondary = interaction.options.getString("secondary");
 		const gamertag = interaction.options.getString("gamertag");
 
-		const newPlayer = new Player({
-			discord_user: interaction.user.id,
-			console: console,
-			gamertag: gamertag,
-			main_position: position,
-			preferred_communication: communication,
-			secondary_position: secondary,
-			// rest of the fields are not required during signup
-		});
+		let newPlayer = await createPlayer(
+			interaction.user.id,
+			gamertag,
+			position,
+			console,
+			communication,
+			secondary,
+		);
 
-		let savedPlayer = await newPlayer.save();
+		if (newPlayer === null) {
+			await interaction.reply(
+				`<@${interaction.user.id}> You are already registered as a player.`,
+			);
+			return;
+		}
 
-		if (!savedPlayer) {
+		if (!newPlayer) {
 			await interaction.reply(
 				`<@${interaction.user.id}> There was an error while registering you as a player. Please try again later or contact an admin.`,
 			);
 			return;
 		}
 
-		const roleId = "1202354826424352768"; // Replace with the actual role ID
+		const roleId = "1202354826424352768"; // adds registered role -- need to use Settings for this later
 		const role = interaction.guild.roles.cache.find((r) => r.id === roleId);
 
 		if (!role) {
