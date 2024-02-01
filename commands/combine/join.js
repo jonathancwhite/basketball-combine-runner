@@ -32,7 +32,7 @@ module.exports = {
 		const player = await Player.findOne({ discord_user: userId });
 
 		if (!player) {
-			console.log("No player found");
+			// console.log("No player found");
 			let channel_id = "1202154641572511744";
 			await interaction.reply(
 				`You need to register for the league first. Please go to <#${channel_id}> and run the /register command.`,
