@@ -7,6 +7,10 @@ const {
 } = require("../../controllers/combineController");
 const Player = require("../../models/PlayerModel");
 
+/**
+ * TODO: Only allow command to be run in the combines channel
+ */
+
 module.exports = {
 	data: new SlashCommandBuilder()
 		.setName("join")
