@@ -104,6 +104,12 @@ module.exports = {
 				interaction.user.id,
 			);
 			await member.roles.add(role);
+
+			// change user nickname to "Gamertag (Position/Secondary)"
+			await member.setNickname(
+				`${gamertag} (${position}${secondary ? "/" + secondary : ""})`,
+			);
+
 			await interaction.reply(
 				`<@${interaction.user.id}> You have registered as a ${position} under the gamertag: ${gamertag}.`,
 			);
