@@ -130,7 +130,7 @@ client.on(Events.InteractionCreate, async (interaction) => {
 
 					ID: ${combine._id}
 					`;
-				await thread.reply(replyMessage);
+				await thread.send(replyMessage);
 
 				await startCombine(combine._id);
 				return;
@@ -151,7 +151,7 @@ client.on(Events.InteractionCreate, async (interaction) => {
 					PF: ${formatPlayer(combine.team_2?.find((p) => p.position === "PF"))}
 					C: ${formatPlayer(combine.team_2?.find((p) => p.position === "C"))}
 					`;
-				await thread.reply(replyMessage);
+				await thread.send(replyMessage);
 			}
 
 			await interaction.update({
