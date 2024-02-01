@@ -107,7 +107,16 @@ module.exports = {
 			);
 			await member.roles.add(role);
 		} catch (error) {
-			console.log(error);
+			const channel = interaction.guild.channels.cache.find(
+				(channel) => channel.name === "moderator-only",
+			);
+
+			await channel.send(
+				`Error setting role for ${interaction.user.username} (${interaction.user.id})`,
+			);
+
+			await channel.send(error);
+
 			await interaction.reply(
 				`Registration succeeded, but there was an issue. Please contact an admin to get your server role.`,
 			);
@@ -123,7 +132,17 @@ module.exports = {
 				`${gamertag} (${position}${secondary ? "/" + secondary : ""})`,
 			);
 		} catch (error) {
-			console.log(error);
+			// send error in moderator channel
+			const channel = interaction.guild.channels.cache.find(
+				(channel) => channel.name === "moderator-only",
+			);
+
+			await channel.send(
+				`Error setting nickname for ${interaction.user.username} (${interaction.user.id})`,
+			);
+
+			await channel.send(error);
+
 			await interaction.reply(
 				`Registration succeeded, but there was an issue. Please contact an admin to get your server role.`,
 			);
