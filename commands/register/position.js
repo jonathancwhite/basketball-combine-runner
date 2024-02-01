@@ -58,8 +58,14 @@ module.exports = {
 			return;
 		}
 
-		await interaction.reply(
-			`Player registration for ${user.username} has been updated to position: ${position}`,
-		);
+		if (main) {
+			await interaction.reply(
+				`Player registration for ${user.username} has been updated to position: ${position}`,
+			);
+		} else {
+			await interaction.reply(
+				`Player registration for ${user.username} has been updated to secondary position: ${position}`,
+			);
+		}
 	},
 };

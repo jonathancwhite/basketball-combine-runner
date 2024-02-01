@@ -1,4 +1,4 @@
-const Player = require("../models/player");
+const Player = require("../models/PlayerModel");
 
 /**
  * Creates a new player

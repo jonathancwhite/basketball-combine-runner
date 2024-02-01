@@ -1,5 +1,4 @@
 const { SlashCommandBuilder } = require("discord.js");
-const Player = require("../../models/PlayerModel");
 const { createPlayer } = require("../../controllers/playerController");
 
 module.exports = {
