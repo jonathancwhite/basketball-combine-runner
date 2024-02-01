@@ -127,14 +127,7 @@ module.exports = {
 				interaction.user.id,
 			);
 
-			// change user nickname to "Gamertag (Position/Secondary)"
-			if (secondary) {
-				await member.setNickname(
-					`${gamertag} (${position}/${secondary})`,
-				);
-			} else {
-				await member.setNickname(`${gamertag} (${position})`);
-			}
+			await member.setNickname(`${gamertag}`);
 		} catch (error) {
 			// send error in moderator channel
 			const channel = interaction.guild.channels.cache.find(
@@ -144,8 +137,6 @@ module.exports = {
 			await channel.send(
 				`Error setting nickname for ${interaction.user.username} (${interaction.user.id})`,
 			);
-
-			await channel.send(error);
 
 			await interaction.reply(
 				`Registration succeeded, but there was an issue. Please contact an admin to get your server role.`,
