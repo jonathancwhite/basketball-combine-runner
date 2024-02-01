@@ -4,7 +4,7 @@ const { setPlayerPaid } = require("../../controllers/playerController");
 module.exports = {
 	data: new SlashCommandBuilder()
 		.setName("paid")
-		.setDescription("Update player registration to paid")
+		.setDescription("Update player registration to paid - Admin Only")
 		.addUserOption((option) =>
 			option
 				.setName("user")

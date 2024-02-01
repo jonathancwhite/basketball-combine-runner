@@ -4,7 +4,7 @@ const { setPlayerPosition } = require("../../controllers/playerController");
 module.exports = {
 	data: new SlashCommandBuilder()
 		.setName("position")
-		.setDescription("Update player position")
+		.setDescription("Update player position - Admin Only")
 		.addUserOption((option) =>
 			option
 				.setName("user")
