@@ -91,20 +91,12 @@ module.exports = {
 		}
 
 		const roleId = "1202354826424352768"; // adds registered role -- need to use Settings for this later
-		const role = interaction.guild.roles.cache.find((r) => r.id === roleId);
-
-		// might need to get role for console and add it
-
-		if (!role) {
-			console.log(`Role not found: ${roleId}`);
-			// Optionally inform the user that the role assignment failed
-			return;
-		}
+		const member = await interaction.guild.members.fetch(
+			interaction.user.id,
+		);
+		const role = await interaction.guild.roles.fetch(roleId);
 
 		try {
-			const member = await interaction.guild.members.fetch(
-				interaction.user.id,
-			);
 			await member.roles.add(role);
 		} catch (error) {
 			const channel = interaction.guild.channels.cache.find(
@@ -115,24 +107,40 @@ module.exports = {
 				`Error setting role for ${interaction.user.username} (${interaction.user.id})`,
 			);
 
-			await channel.send(error);
+			await interaction.reply(
+				`Registration succeeded, but there was an issue. Please contact an admin to get your server role.`,
+			);
+			return;
+		}
+
+		try {
+			const channel = interaction.guild.channels.cache.find(
+				(channel) => channel.name === "moderator-only",
+			);
+
+			await member.setNickname(`${gamertag}`);
+
+			await channel.send(
+				`New player registered: <@${interaction.user.id}> - ${gamertag} - ${position} - ${console} - ${communication} - ${secondary}`,
+			);
+		} catch (error) {
+			// send error in moderator channel
+			const channel = interaction.guild.channels.cache.find(
+				(channel) => channel.name === "moderator-only",
+			);
+
+			await channel.send(
+				`Error setting nickname for ${interaction.user.username} (${interaction.user.id})`,
+			);
 
 			await interaction.reply(
 				`Registration succeeded, but there was an issue. Please contact an admin to get your server role.`,
 			);
+			return;
 		}
 
 		await interaction.reply(
 			`<@${interaction.user.id}> You have registered as a ${position} under the gamertag: ${gamertag}.`,
-		);
-
-		// send message to moderator-only channel to notify of new registration
-		const channel = interaction.guild.channels.cache.find(
-			(channel) => channel.name === "moderator-only",
-		);
-
-		await channel.send(
-			`New player registered: <@${interaction.user.id}> - ${gamertag} - ${position} - ${console} - ${communication} - ${secondary}`,
 		);
 	},
 };
