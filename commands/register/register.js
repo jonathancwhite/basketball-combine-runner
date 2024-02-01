@@ -90,11 +90,19 @@ module.exports = {
 			return;
 		}
 
-		const roleId = "1202354826424352768"; // adds registered role -- need to use Settings for this later
 		const member = await interaction.guild.members.fetch(
 			interaction.user.id,
 		);
+		const roleId = "1202354826424352768"; // adds registered role -- need to use Settings for this later
 		const role = await interaction.guild.roles.fetch(roleId);
+
+		if (!role) {
+			const channel = interaction.guild.channels.cache.find(
+				(channel) => channel.name === "moderator-only",
+			);
+
+			await channel.send(`Role not found for <@${roleId}>`);
+		}
 
 		try {
 			await member.roles.add(role);
