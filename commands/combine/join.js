@@ -62,8 +62,8 @@ module.exports = {
 		if (
 			currentCombine &&
 			((await isCombineFull(currentCombine._id)) ||
-				isPlayerInCombine(currentCombine, userId) ||
-				isPlayerInAnyCombine(userId))
+				(await isPlayerInCombine(currentCombine, userId)) ||
+				(await isPlayerInAnyCombine(userId)))
 		) {
 			await interaction.reply({
 				content:
