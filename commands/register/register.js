@@ -93,6 +93,8 @@ module.exports = {
 		const roleId = "1202354826424352768"; // adds registered role -- need to use Settings for this later
 		const role = interaction.guild.roles.cache.find((r) => r.id === roleId);
 
+		// might need to get role for console and add it
+
 		if (!role) {
 			console.log(`Role not found: ${roleId}`);
 			// Optionally inform the user that the role assignment failed
@@ -104,20 +106,31 @@ module.exports = {
 				interaction.user.id,
 			);
 			await member.roles.add(role);
+		} catch (error) {
+			console.log(error);
+			await interaction.reply(
+				`Registration succeeded, but there was an issue. Please contact an admin to get your server role.`,
+			);
+		}
+
+		try {
+			const member = await interaction.guild.members.fetch(
+				interaction.user.id,
+			);
 
 			// change user nickname to "Gamertag (Position/Secondary)"
 			await member.setNickname(
 				`${gamertag} (${position}${secondary ? "/" + secondary : ""})`,
 			);
-
-			await interaction.reply(
-				`<@${interaction.user.id}> You have registered as a ${position} under the gamertag: ${gamertag}.`,
-			);
 		} catch (error) {
-			console.error(`Could not add role: ${error}`);
+			console.log(error);
 			await interaction.reply(
 				`Registration succeeded, but there was an issue. Please contact an admin to get your server role.`,
 			);
 		}
+
+		await interaction.reply(
+			`<@${interaction.user.id}> You have registered as a ${position} under the gamertag: ${gamertag}.`,
+		);
 	},
 };
