@@ -146,5 +146,14 @@ module.exports = {
 		await interaction.reply(
 			`<@${interaction.user.id}> You have registered as a ${position} under the gamertag: ${gamertag}.`,
 		);
+
+		// send message to moderator-only channel to notify of new registration
+		const channel = interaction.guild.channels.cache.find(
+			(channel) => channel.name === "moderator-only",
+		);
+
+		await channel.send(
+			`New player registered: <@${interaction.user.id}> - ${gamertag} - ${position} - ${console} - ${communication} - ${secondary}`,
+		);
 	},
 };
